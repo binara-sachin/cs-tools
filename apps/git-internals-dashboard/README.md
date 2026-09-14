@@ -102,6 +102,13 @@ or returned by any endpoint except `POST /issues/titles`, which fetches titles l
 on demand and caches them in memory only (never written to Postgres, never sent anywhere else).
 Labels are read transiently during ingest solely to derive an issue's priority, then discarded.
 
+## Security Scanning
+
+SAST, SCA, secrets, and IaC config scanning run in CI on every PR and push,
+plus a weekly schedule; DAST runs on demand against a non-production
+environment. See [SECURITY.md](./SECURITY.md) for what each scanner covers,
+the findings register, and how to run an active scan locally.
+
 ## Reporting Issues
 
 ### 1. Opening an issue
