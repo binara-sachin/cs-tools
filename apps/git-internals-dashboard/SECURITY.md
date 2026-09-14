@@ -92,24 +92,25 @@ Record of what each scanner found on first run, and what was done about it.
 | `pnpm-workspace.yaml` missing required `packages:` field, blocking `pnpm install` under pnpm 9/10 | manual (blocked `sca-web`/`sast-web` from running at all) | **Fixed** — added `packages: ["."]`. Single-package app; no workspace semantics change. |
 | `vite@7.2.4`: dev-server `fs.deny`/websocket/path-traversal issues (multiple HIGH) | pnpm audit, trivy fs | **Fixed** — bumped to 7.3.6 (dev-only tooling, not shipped to production; build/lint/tests pass). |
 | `vitest@4.0.18`: CRITICAL arbitrary file read via UI server; MODERATE `@vitest/mocker` path traversal | pnpm audit | **Fixed** — bumped to 4.1.11 (dev/test-only; tests pass). |
-| `react-router@7.1.5`: multiple HIGH advisories including an RCE-class turbo-stream deserialization bug, open redirect, DoS, XSS in ScrollRestoration | pnpm audit, trivy fs | **Needs a decision** — see below. Not bumped. |
+| `react-router@7.1.5`: multiple HIGH advisories including an RCE-class turbo-stream deserialization bug, open redirect, DoS, XSS in ScrollRestoration | pnpm audit, trivy fs | **Fixed** — bumped to 7.18.3 (approved; see below). Still within v7, no major-version jump; build/lint/tests pass and `pnpm audit --audit-level=high` is now clean. |
 | `dompurify@3.3.1`: several MODERATE/LOW sanitizer bypass advisories | pnpm audit | **Accepted for now, tracked** — transitive via `@asgardeo/react`'s own dependency tree, not a direct dependency; all below the `--audit-level=high` gate. The latest `@asgardeo/react` (0.25.13) still ships the same `dompurify` version, so there's no upstream fix to pick up yet. Revisit when Asgardeo bumps it, or if this needs escalating independently of the react-router decision. |
 | `elliptic@6.6.1`: LOW, "risky cryptographic primitive" | pnpm audit | **Accepted, no fix available** — advisory has no patched version; deep transitive via `@asgardeo/browser`'s `crypto-browserify` polyfill, not used directly by this app. |
 | `internal/appconfig/validate.go:27`: gosec G101 "potential hardcoded credentials" on `headerTokenChars` | gosec (default severity) | **Suppressed, false positive** — `#nosec G101` added; the flagged line is a charset constant for validating header names, not a credential. Below the HIGH-confidence gate regardless. |
 | `webapp/public/config.js`, `webapp/dist/config.js` contain what looks like an OAuth client ID | gitleaks (initial run with `--no-git`, scanning the filesystem directly) | **Not a finding** — both files are gitignored and were never committed; re-running gitleaks the way CI actually will (against git history) found nothing. The value itself is also a public OIDC client ID for a PKCE flow, not a secret, even hypothetically. |
 | Hand-written SQL (`internal/handler/issues.go`, `internal/db/configsync.go`), GitHub search query construction (`internal/github/client.go`, `internal/sync/incremental.go`) | gosec + manual review | **Reviewed, no issue** — all dynamic SQL uses `$N` placeholders for values; table/column names interpolated via `fmt.Sprintf` come only from hardcoded literals at two call sites, never from request input. GitHub search query fields (`owner`, `name`, `issueQuery`) come from the operator-controlled YAML config, not any HTTP request path. |
 
-### Needs a decision: react-router
+### react-router (approved and applied)
 
-`react-router@7.1.5` has several HIGH-severity advisories, the most serious
+`react-router@7.1.5` had several HIGH-severity advisories, the most serious
 being an RCE-class arbitrary constructor invocation in its vendored
 `turbo-stream` deserialization (fixed 7.14.2), plus open-redirect, DoS, and
 XSS-in-`ScrollRestoration` issues, all fixed by 7.18.0 or earlier — still
 within the v7 line, not a major-version jump. `@asgardeo/react-router`
-(2.0.0)'s own peer range (`react-router: >=6.30.1`) permits the bump.
+(2.0.0)'s own peer range (`react-router: >=6.30.1`) permitted the bump, and
+this app uses react-router in client-only mode (not framework/SSR mode), so
+several of the CVE classes didn't apply to begin with.
 
-Not bumped unilaterally because react-router underlies every route in this
-app, including the ones behind `AuthGuard`, and this task's instructions call
-for a decision on anything touching the auth model rather than guessing. If
-you're fine with `7.1.5 → 7.18.3`, that's a one-line `package.json` change
-plus `pnpm install`; flag it and it'll be done as its own commit.
+Not bumped unilaterally at first, since react-router underlies every route
+in this app including the ones behind `AuthGuard` — flagged for a decision
+rather than guessing. Approved and applied as its own commit; build, lint,
+and tests all pass at 7.18.3.
