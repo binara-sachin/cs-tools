@@ -53,8 +53,8 @@ workflow files for syntax errors and Actions-specific security issues
 
 `.github/workflows/git-internals-dashboard-dast.yml` is `workflow_dispatch`
 only — never push, never a schedule, never production. It takes `target_url`,
-`scan_mode` (`baseline` | `api` | `full`, default `baseline`), and an optional
-`use_bearer_token` flag.
+`scan_mode` (`baseline` | `api` | `full`, default `baseline`), and the
+optional `use_bearer_token` and `confirm_active_scan` flags.
 
 - `baseline` — OWASP ZAP passive scan against the given webapp URL. Safe
   against any environment.
@@ -62,11 +62,14 @@ only — never push, never a schedule, never production. It takes `target_url`,
   ZAP's default active API-scan rules against the documented endpoints only
   (not an unbounded crawl), so it's bounded to what's actually in the spec.
   With `use_bearer_token: true`, it reads the repository secret
-  `GID_DEV_BEARER_TOKEN` and injects it as an `Authorization: Bearer` header
-  via ZAP's replacer config — the token itself is never printed or committed.
-- `full` — refuses to run. An unbounded active scan against the shared Choreo
-  data plane is indistinguishable from an attack and needs the platform team's
-  clearance first. Its intended target is a local instance — see below.
+  `GID_DEV_BEARER_TOKEN` and passes it to ZAP as `ZAP_AUTH_HEADER_VALUE`
+  (`Bearer <token>`), which ZAP core injects as the `Authorization` header on
+  every request — the token itself is never printed or committed.
+- `full` — an unbounded active scan against the shared Choreo data plane,
+  indistinguishable from an attack. Refuses to run unless
+  `confirm_active_scan: true`, which must only be set once the platform team
+  has actually cleared the scan. The safe, clearance-free target for active
+  scanning is a local instance — see below.
 
 For active scanning, use `apps/git-internals-dashboard/scripts/dast-local.sh`.
 It brings up `backend/docker-compose.yml`'s Postgres, runs migrations and a
