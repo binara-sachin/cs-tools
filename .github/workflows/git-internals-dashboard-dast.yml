@@ -16,15 +16,18 @@
 
 # Manual dispatch only — never push, never a schedule, and never against a
 # production URL. `full` runs an active scan, which is indistinguishable from
-# an attack on a shared environment: clear it with the platform team before
-# running `full` against anything on the Choreo data plane. The safe target
-# for `full` is a locally docker-composed instance — see
+# an attack on a shared environment: it refuses to run unless
+# confirm_active_scan=true, and that must only be set once the platform team
+# has cleared an active scan against target_url. The safe target for `full`
+# is a locally docker-composed instance — see
 # apps/git-internals-dashboard/scripts/dast-local.sh, which runs that same
-# active scan against localhost without touching Choreo at all.
+# active scan against localhost without touching Choreo (or needing
+# clearance) at all.
 #
 # The optional bearer token comes from the repository secret
 # GID_DEV_BEARER_TOKEN (Settings > Secrets and variables > Actions). It is
-# never logged or echoed; ZAP receives it only through its replacer config.
+# never logged or echoed; ZAP receives it only via ZAP_AUTH_HEADER_VALUE,
+# which GitHub Actions masks in logs like any other secret-derived value.
 
 name: Git Internals Dashboard DAST
 
@@ -36,7 +39,7 @@ on:
         required: true
         type: string
       scan_mode:
-        description: "baseline (passive, webapp) | api (openapi.yaml driven) | full (active — non-production only, see file header)"
+        description: "baseline (passive, webapp) | api (openapi.yaml driven) | full (active — requires confirm_active_scan, see file header)"
         required: false
         type: choice
         options:
@@ -45,7 +48,12 @@ on:
           - full
         default: baseline
       use_bearer_token:
-        description: "Inject GID_DEV_BEARER_TOKEN as an Authorization header via ZAP's replacer"
+        description: "Inject GID_DEV_BEARER_TOKEN as the Authorization header (ZAP_AUTH_HEADER_VALUE)"
+        required: false
+        type: boolean
+        default: false
+      confirm_active_scan:
+        description: "scan_mode=full only: I have platform-team clearance to run an active scan against target_url"
         required: false
         type: boolean
         default: false
@@ -97,37 +105,43 @@ jobs:
               yaml.safe_dump(spec, f)
           PY
 
-      - name: Write ZAP replacer config for the bearer token
-        if: inputs.use_bearer_token
-        env:
-          GID_DEV_BEARER_TOKEN: ${{ secrets.GID_DEV_BEARER_TOKEN }}
-        run: |
-          mkdir -p zap-config
-          cat > zap-config/replacer.config <<EOF
-          rule.name=dev-bearer-token
-          rule.description=Inject the GID_DEV_BEARER_TOKEN dev-only bearer token
-          rule.enabled=true
-          rule.matchtype=REQ_HEADER
-          rule.matchstr=Authorization
-          rule.regex=false
-          rule.replacement=Bearer ${GID_DEV_BEARER_TOKEN}
-          rule.initiators=
-          EOF
-
       - name: ZAP API Scan
         uses: zaproxy/action-api-scan@5158fe4d9d8fcc75ea204db81317cce7f9e5453d # v0.10.0
+        # ZAP core itself reads ZAP_AUTH_HEADER_VALUE (and defaults
+        # ZAP_AUTH_HEADER to "Authorization" when unset) and injects it on
+        # every request — the action passes these straight through to the
+        # container. Left unset entirely when use_bearer_token is false, so
+        # no empty/placeholder header is ever sent.
+        env:
+          ZAP_AUTH_HEADER_VALUE: ${{ inputs.use_bearer_token && format('Bearer {0}', secrets.GID_DEV_BEARER_TOKEN) || '' }}
         with:
           target: openapi-scan.yaml
           format: openapi
           cmd_options: "-a"
 
-  zap-full:
-    name: ZAP Full Scan (ACTIVE — non-production only)
-    if: inputs.scan_mode == 'full'
+  zap-full-refused:
+    name: ZAP Full Scan — refused (no clearance confirmed)
+    if: inputs.scan_mode == 'full' && !inputs.confirm_active_scan
     runs-on: ubuntu-latest
     steps:
       - name: Refuse to run without explicit platform-team clearance
         run: |
           echo "::error::scan_mode=full runs an active scan. This must not be pointed at the shared Choreo data plane without clearance from the platform team — it is indistinguishable from an attack."
-          echo "::error::The intended target for an active scan is a locally docker-composed instance. Use apps/git-internals-dashboard/scripts/dast-local.sh instead of dispatching this workflow with scan_mode=full."
+          echo "::error::Re-run with confirm_active_scan=true only once that clearance is in hand, or target a local instance instead: apps/git-internals-dashboard/scripts/dast-local.sh runs this same active scan against localhost with no clearance needed."
           exit 1
+
+  zap-full:
+    name: ZAP Full Scan (ACTIVE — clearance confirmed)
+    if: inputs.scan_mode == 'full' && inputs.confirm_active_scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+
+      - name: ZAP Full Scan
+        uses: zaproxy/action-full-scan@3c58388149901b9a03b7718852c5ba889646c27c # v0.13.0
+        with:
+          target: ${{ inputs.target_url }}
+          cmd_options: "-a"
