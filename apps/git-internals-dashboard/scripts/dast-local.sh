@@ -108,20 +108,47 @@ done
 ZAP_NETWORK_ARGS=(--add-host=host.docker.internal:host-gateway)
 ZAP_HOST="host.docker.internal"
 
+# ZAP's own exit codes (zap-api-scan.py / zap-full-scan.py): 0 clean, 1 at
+# least one FAIL alert, 2 at least one WARN alert — all three mean the scan
+# itself completed and wrote a report. 3 is ZAP's documented "any other
+# failure" (the scan itself broke, e.g. it never reached the target).
+# check_zap_result treats 0-2 as success and 3+ (or a missing report file,
+# as a second safety net) as a real failure, instead of the old blanket
+# `|| true`, which discarded a broken run indistinguishably from a clean one.
+check_zap_result() {
+  local status="$1" report="$2" label="$3"
+  if [ "$status" -ge 3 ] || [ ! -f "$report" ]; then
+    echo "==> $label ZAP scan failed (exit $status) or produced no report at $report" >&2
+    return 1
+  fi
+  return 0
+}
+
 echo "==> Running ZAP full active scan against the backend (openapi.yaml)"
+BACKEND_SCAN_STATUS=0
 docker run --rm "${ZAP_NETWORK_ARGS[@]}" \
   -v "$ZAP_WORK_DIR:/zap/wrk/:rw" \
   -v "$BACKEND_DIR/openapi.yaml:/zap/wrk/openapi.yaml:ro" \
   -t ghcr.io/zaproxy/zaproxy:stable \
   zap-api-scan.py -t /zap/wrk/openapi.yaml -f openapi \
     -O "$ZAP_HOST:8080" \
-    -r backend-full-scan-report.html || true
+    -r backend-full-scan-report.html || BACKEND_SCAN_STATUS=$?
 
 echo "==> Running ZAP full active scan against the webapp (pre-login surface only)"
+WEBAPP_SCAN_STATUS=0
 docker run --rm "${ZAP_NETWORK_ARGS[@]}" \
   -v "$ZAP_WORK_DIR:/zap/wrk/:rw" \
   -t ghcr.io/zaproxy/zaproxy:stable \
   zap-full-scan.py -t "http://$ZAP_HOST:4173" \
-    -r webapp-full-scan-report.html || true
+    -r webapp-full-scan-report.html || WEBAPP_SCAN_STATUS=$?
+
+SCAN_FAILED=0
+check_zap_result "$BACKEND_SCAN_STATUS" "$ZAP_WORK_DIR/backend-full-scan-report.html" "Backend" || SCAN_FAILED=1
+check_zap_result "$WEBAPP_SCAN_STATUS" "$ZAP_WORK_DIR/webapp-full-scan-report.html" "Webapp" || SCAN_FAILED=1
+
+if [ "$SCAN_FAILED" -ne 0 ]; then
+  echo "==> One or more ZAP scans failed to complete — see errors above" >&2
+  exit 1
+fi
 
 echo "==> Reports written to $ZAP_WORK_DIR/{backend,webapp}-full-scan-report.html"
