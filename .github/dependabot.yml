@@ -27,7 +27,7 @@ updates:
           - minor
           - patch
 
-  - package-ecosystem: npm_and_yarn
+  - package-ecosystem: npm
     directory: /apps/git-internals-dashboard/webapp
     schedule:
       interval: weekly
