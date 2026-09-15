@@ -77,6 +77,12 @@ jobs:
         with:
           target: ${{ inputs.target_url }}
           cmd_options: "-a"
+          # This workflow only grants `contents: read` (see permissions:
+          # above); allow_issue_writing defaults to true and needs
+          # issues: write to file/update a report issue, which would fail
+          # under this token. Scan results are read from the job output
+          # instead.
+          allow_issue_writing: false
 
   zap-api:
     name: ZAP API Scan (openapi.yaml)
@@ -87,6 +93,23 @@ jobs:
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           persist-credentials: false
+
+      - name: Restrict target_url to an approved Choreo dev host
+        # api mode forwards GID_DEV_BEARER_TOKEN (when use_bearer_token is
+        # set) to whatever host target_url names. workflow_dispatch inputs
+        # are attacker-influenceable by anyone who can trigger this
+        # workflow, so target_url is validated against this app's own
+        # documented backend host convention (see
+        # webapp/public/config.js.example) before the token is ever put in
+        # scope, rather than trusting the confirm/description text alone.
+        env:
+          TARGET_URL: ${{ inputs.target_url }}
+        run: |
+          host=$(python3 -c "import sys, urllib.parse as u; print(u.urlparse(sys.argv[1]).hostname or '')" "$TARGET_URL")
+          if [[ -z "$host" ]] || ! [[ "$host" =~ ^([a-zA-Z0-9-]+\.)*choreoapis\.dev$ ]]; then
+            echo "::error::target_url host '$host' is not an approved Choreo backend dev host (*.choreoapis.dev). Refusing to run — this gates forwarding GID_DEV_BEARER_TOKEN to an arbitrary host."
+            exit 1
+          fi
 
       - name: Point the spec at the scan target
         env:
@@ -118,6 +141,7 @@ jobs:
           target: openapi-scan.yaml
           format: openapi
           cmd_options: "-a"
+          allow_issue_writing: false
 
   zap-full-refused:
     name: ZAP Full Scan — refused (no clearance confirmed)
@@ -140,8 +164,25 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: Restrict target_url to an approved Choreo dev host
+        # An active scan is indistinguishable from an attack; confirm_active_scan
+        # is only a checkbox and does not, by itself, stop target_url from
+        # naming an unrelated production or third-party host. Validated here
+        # against this app's own documented webapp host convention (see
+        # webapp/public/config.js.example's backend equivalent) before the
+        # active scan runs at all.
+        env:
+          TARGET_URL: ${{ inputs.target_url }}
+        run: |
+          host=$(python3 -c "import sys, urllib.parse as u; print(u.urlparse(sys.argv[1]).hostname or '')" "$TARGET_URL")
+          if [[ -z "$host" ]] || ! [[ "$host" =~ ^([a-zA-Z0-9-]+\.)*choreoapps\.dev$ ]]; then
+            echo "::error::target_url host '$host' is not an approved Choreo webapp dev host (*.choreoapps.dev). Refusing to run an active scan against an unapproved host."
+            exit 1
+          fi
+
       - name: ZAP Full Scan
         uses: zaproxy/action-full-scan@3c58388149901b9a03b7718852c5ba889646c27c # v0.13.0
         with:
           target: ${{ inputs.target_url }}
           cmd_options: "-a"
+          allow_issue_writing: false
