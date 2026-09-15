@@ -21,11 +21,13 @@ on:
     paths:
       - apps/git-internals-dashboard/**
       - .github/workflows/git-internals-dashboard-security.yml
+      - .github/workflows/git-internals-dashboard-dast.yml
   push:
     branches: [main]
     paths:
       - apps/git-internals-dashboard/**
       - .github/workflows/git-internals-dashboard-security.yml
+      - .github/workflows/git-internals-dashboard-dast.yml
   schedule:
     # Dependency advisories change even when the code does not.
     - cron: "0 3 * * 1"
