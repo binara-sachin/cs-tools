@@ -110,7 +110,7 @@ paths:
               $ref: '#/components/schemas/SlaState'
         - name: status
           in: query
-          description: Repeatable; values are OR-ed together.
+          description: Repeatable; values are OR-ed together. The reserved value `Other` matches any status not listed in `taxonomy.statuses`.
           style: form
           explode: true
           schema:
@@ -377,6 +377,9 @@ components:
       properties:
         name:
           type: string
+        displayName:
+          type: string
+          description: Label to show instead of `name` (equals `name` when none is configured).
         category:
           type: string
           enum: [PRODUCT_SIDE, CS_SIDE, OTHER, TRANSIENT]

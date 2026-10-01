@@ -626,6 +626,34 @@ func TestListIssuesStatusFilterOrsMultipleValues(t *testing.T) {
 	assertSameSet(t, numbersOf(decodeIssueList(t, rec)), []int{102, 107})
 }
 
+// TestListIssuesStatusOtherMatchesUnconfiguredStatuses verifies the reserved
+// status value "Other" matches any status outside taxonomy.statuses, and ORs
+// with named statuses.
+func TestListIssuesStatusOtherMatchesUnconfiguredStatuses(t *testing.T) {
+	pool := testPool(t)
+	repoID := seedIssuesFixture(t, pool)
+	if _, err := pool.Exec(context.Background(),
+		`UPDATE issues SET current_status = 'Waiting-on-Foo' WHERE repository_id = $1 AND github_number = 103`, repoID); err != nil {
+		t.Fatalf("retag issue 103: %v", err)
+	}
+	h := NewIssuesHandler(pool, handlerTestConfig, appconfig.Default().API)
+
+	for _, tc := range []struct {
+		query string
+		want  []int
+	}{
+		{"status=Other", []int{103}},
+		{"status=Other&status=WOC", []int{102, 103}},
+		{"bucket=product_side", []int{101, 103, 104}},
+		{"bucket=product_side&status=Other", []int{103}},
+	} {
+		req := httptest.NewRequest(http.MethodGet, "/issues?repo=test-owner/test-issues&"+tc.query, nil)
+		rec := httptest.NewRecorder()
+		h.ListIssues(rec, req)
+		assertSameSet(t, numbersOf(decodeIssueList(t, rec)), tc.want)
+	}
+}
+
 // TestListIssuesSlaStateFilterOrsMultipleValues verifies repeated `slaState`
 // values are OR-ed together.
 func TestListIssuesSlaStateFilterOrsMultipleValues(t *testing.T) {

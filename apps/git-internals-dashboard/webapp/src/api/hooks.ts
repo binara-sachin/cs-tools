@@ -17,7 +17,7 @@
 // TanStack React Query hooks wrapping the api client's endpoint functions.
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "./endpoints";
-import type { GlobalFilters, IssueFilters } from "./types";
+import type { GlobalFilters, IssueFilters, Taxonomy } from "./types";
 
 /**
  * GET /metrics/overview, optionally scoped to repo/priority/abtTeam; polls
@@ -110,4 +110,13 @@ export function useManualSync() {
       void queryClient.invalidateQueries({ queryKey: ["timeseries"] });
     },
   });
+}
+
+/** Reserved `status` filter value matching any status not listed in the taxonomy. */
+export const OTHER_STATUS = "Other";
+
+/** Maps a raw board status to its configured display name (unchanged when none). */
+export function makeStatusLabel(taxonomy: Taxonomy | undefined) {
+  const byName = new Map((taxonomy?.statuses ?? []).map((s) => [s.name, s.displayName]));
+  return (status: string): string => byName.get(status) || status;
 }

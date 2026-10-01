@@ -72,11 +72,14 @@ type RepoEntry struct {
 // transient empty status a board item briefly holds when removed from the
 // board.
 type StatusEntry struct {
-	Name       string         `yaml:"name"`
-	Category   StatusCategory `yaml:"category"`
-	AccruesSla bool           `yaml:"accruesSla"`
-	IsTerminal bool           `yaml:"isTerminal"`
-	SortOrder  int            `yaml:"sortOrder"`
+	Name string `yaml:"name"`
+	// DisplayName is the label the dashboard shows instead of Name (e.g.
+	// "WOC" -> "Waiting on CS Team"); empty means show Name as-is.
+	DisplayName string         `yaml:"displayName"`
+	Category    StatusCategory `yaml:"category"`
+	AccruesSla  bool           `yaml:"accruesSla"`
+	IsTerminal  bool           `yaml:"isTerminal"`
+	SortOrder   int            `yaml:"sortOrder"`
 }
 
 // AliasEntry maps a raw board status string to its canonical taxonomy name.

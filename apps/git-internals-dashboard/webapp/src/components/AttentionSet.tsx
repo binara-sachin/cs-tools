@@ -30,7 +30,7 @@ type Category = "violated" | "at_risk" | "cs";
 const CHIPS: { key: Category; label: string; color: string; tint: string }[] = [
   { key: "violated", label: "Violated", color: "var(--sla-violated)", tint: "var(--sla-violated-tint)" },
   { key: "at_risk", label: "At risk", color: "var(--sla-at-risk)", tint: "var(--sla-at-risk-tint)" },
-  { key: "cs", label: "On CS side", color: "var(--sla-cs)", tint: "var(--sla-cs-tint)" },
+  { key: "cs", label: "On CS Team Side", color: "var(--sla-cs)", tint: "var(--sla-cs-tint)" },
 ];
 
 interface AttentionSetProps {
@@ -40,10 +40,11 @@ interface AttentionSetProps {
   priority?: string;
   abtTeam?: string;
   isCsStatus: (status: string | null | undefined) => boolean;
+  statusLabel?: (status: string) => string;
 }
 
 /** Filterable list of violated/at-risk/CS-side issues, with toggleable category chips. */
-export function AttentionSet({ hero, projects, repo, priority, abtTeam, isCsStatus }: AttentionSetProps) {
+export function AttentionSet({ hero, projects, repo, priority, abtTeam, isCsStatus, statusLabel }: AttentionSetProps) {
   const [active, setActive] = useState<Set<Category>>(new Set(["violated", "at_risk", "cs"]));
 
   // Capped summary, not a browse view: no pagination/sort controls of its
@@ -163,6 +164,7 @@ export function AttentionSet({ hero, projects, repo, priority, abtTeam, isCsStat
             issue={issue}
             projectName={nameForRepo(issue.repo)}
             isCsStatus={isCsStatus}
+            statusLabel={statusLabel}
           />
         ))
       )}

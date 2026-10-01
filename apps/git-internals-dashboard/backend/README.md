@@ -94,7 +94,12 @@ this properly means persisting priority-change events and walking budget segment
 until then, treat `pct_consumed`/`sla_state` as computed against an issue's *current* priority,
 not a running record of the priority in effect when the time was actually spent.
 
-**`settings.unknownStatusPolicy`** (`pause` default, or `accrue`) controls what the SLA clock
+**Taxonomy.** `taxonomy.statuses` lists only the statuses with special handling (Open, Reopened,
+In Progress, WOW, WOC). Every other board status is product-team side ("Other" in the dashboard)
+and accrues SLA; only WOC (the sole `CS_SIDE` entry) pauses the clock, besides the GitHub issue
+being closed. `displayName` is what the dashboard shows for a status.
+
+**`settings.unknownStatusPolicy`** (`pause` default, or `accrue`; the shipped config uses `accrue`) controls what the SLA clock
 does with a board status absent from `taxonomy.statuses` — a renamed or newly added column. Either
 way, the current set of unknown statuses is always surfaced on `GET /metrics/overview` (as
 `unknownStatuses`, backed by the `unknown_statuses` table the recompute tick maintains) so they get

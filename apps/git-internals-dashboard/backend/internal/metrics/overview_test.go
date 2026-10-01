@@ -776,10 +776,10 @@ func TestBuildOverviewAllFiltersTogether(t *testing.T) {
 	}
 }
 
-// TestBuildOverviewEmptyProductSideCategory verifies a taxonomy with no
-// PRODUCT_SIDE status — a valid configuration — yields zero product-side
-// counts across the whole spark window rather than an error.
-func TestBuildOverviewEmptyProductSideCategory(t *testing.T) {
+// TestBuildOverviewNoProductSideWhenEveryStatusIsCs verifies product side is
+// "every non-CS status": with all fixture statuses configured CS_SIDE, the
+// product-side counts are zero across the whole spark window, no error.
+func TestBuildOverviewNoProductSideWhenEveryStatusIsCs(t *testing.T) {
 	pool := testPool(t)
 	repositoryID := seedMetricsFixture(t, pool)
 	seedMetricsYesterdaySnapshots(t, pool, repositoryID)
@@ -788,8 +788,9 @@ func TestBuildOverviewEmptyProductSideCategory(t *testing.T) {
 	cfg := &config.AppConfig{
 		Taxonomy: config.Taxonomy{
 			Statuses: []config.StatusEntry{
+				{Name: "Open", Category: config.CategoryCSSide, AccruesSla: false},
+				{Name: "In Progress", Category: config.CategoryCSSide, AccruesSla: false},
 				{Name: "WOC", Category: config.CategoryCSSide, AccruesSla: false},
-				{Name: "Resolved", Category: config.CategoryOther, AccruesSla: false, IsTerminal: true},
 			},
 		},
 		Budgets: metricsTestConfig.Budgets,

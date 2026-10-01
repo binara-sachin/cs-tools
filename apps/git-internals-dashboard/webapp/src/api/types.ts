@@ -163,6 +163,8 @@ export interface Timeseries {
 
 export interface StatusDefRow {
   name: string;
+  /** Label to show instead of `name` (equals `name` when none is configured). */
+  displayName: string;
   category: string;
   accruesSla: boolean;
   isTerminal: boolean;
