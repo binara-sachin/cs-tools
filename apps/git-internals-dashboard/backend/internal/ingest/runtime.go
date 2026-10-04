@@ -17,6 +17,7 @@
 package ingest
 
 import (
+	"strings"
 	"time"
 
 	"github.com/binara-sachin/git-internals-dashboard/backend/internal/config"
@@ -32,6 +33,9 @@ type RuntimeConfig struct {
 	KnownNames map[string]bool
 	// SpecialTeams are label-driven team overrides (see ApplySpecialTeam).
 	SpecialTeams []config.SpecialTeamEntry
+	// PriorityAliases maps a variant "Priority/<tier>" tier to its
+	// canonical budgeted tier (see extractPriority).
+	PriorityAliases map[string]string
 }
 
 // BuildRuntimeConfig derives a RuntimeConfig from app.
@@ -91,11 +95,17 @@ func BuildRuntimeConfig(app *config.AppConfig) *RuntimeConfig {
 		Holidays:        holidays,
 	}
 
+	priorityAliases := make(map[string]string, len(app.PriorityAliases))
+	for _, a := range app.PriorityAliases {
+		priorityAliases[strings.TrimSpace(a.Alias)] = a.Canonical
+	}
+
 	return &RuntimeConfig{
 		Cfg:        cfg,
 		Normalize:  BuildStatusNormalizer(app.Taxonomy.Aliases),
 		KnownNames: knownNames,
 
-		SpecialTeams: app.SpecialTeams,
+		SpecialTeams:    app.SpecialTeams,
+		PriorityAliases: priorityAliases,
 	}
 }

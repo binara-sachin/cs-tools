@@ -76,7 +76,8 @@ type rawAppConfig struct {
 	Settings rawSettings   `yaml:"settings"`
 	Holidays []string      `yaml:"holidays"`
 
-	SpecialTeams []SpecialTeamEntry `yaml:"specialTeams"`
+	SpecialTeams    []SpecialTeamEntry   `yaml:"specialTeams"`
+	PriorityAliases []PriorityAliasEntry `yaml:"priorityAliases"`
 }
 
 // configPath resolves SLA_CONFIG_PATH (absolute path recommended) or falls
@@ -116,7 +117,8 @@ func Load() (*AppConfig, error) {
 		Settings: parsed.Settings.resolve(),
 		Holidays: parsed.Holidays,
 
-		SpecialTeams: parsed.SpecialTeams,
+		SpecialTeams:    parsed.SpecialTeams,
+		PriorityAliases: parsed.PriorityAliases,
 	}
 	if cfg.Taxonomy.Aliases == nil {
 		cfg.Taxonomy.Aliases = []AliasEntry{}

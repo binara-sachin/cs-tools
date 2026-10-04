@@ -45,6 +45,17 @@ specialTeams:
   - name: Onboarding
     label: "Onboarding/Affected"
 
+# Variant "Priority/<tier>" labels some projects use, folded onto a budgeted
+# tier. `alias` is the text after "Priority/" on the GitHub label (exact,
+# case-sensitive); `canonical` must be a priority listed under budgets below.
+# Without an alias, a variant tier is stored as written and, matching no
+# budget, gets no SLA. Takes effect for an issue on its next sync.
+priorityAliases:
+  - { alias: "High",        canonical: "High(P2)" }
+  - { alias: "High (P2)",   canonical: "High(P2)" }
+  - { alias: "Medium",      canonical: "Medium(P3)" }
+  - { alias: "Normal (P3)", canonical: "Medium(P3)" }
+
 # Budgets in coverage-clock hours (time accrues only inside the coverage window).
 # A 12x5 "business day" is the 12-hour 09:00–21:00 IST window, so
 # P2 "2 days" = 24h and P3 "4 days" = 48h. P4 omitted -> NO_SLA.

@@ -77,6 +77,14 @@ type SpecialTeamEntry struct {
 	Label string `yaml:"label"`
 }
 
+// PriorityAliasEntry folds a non-canonical priority label tier into a
+// budgeted one. Alias is the text after "Priority/" on the GitHub label
+// (e.g. "High" for "Priority/High"); Canonical must be a budgets priority.
+type PriorityAliasEntry struct {
+	Alias     string `yaml:"alias"`
+	Canonical string `yaml:"canonical"`
+}
+
 // StatusEntry is one row of the board-status taxonomy. Name may be "" — the
 // transient empty status a board item briefly holds when removed from the
 // board.
@@ -175,6 +183,9 @@ type AppConfig struct {
 	// SpecialTeams are label-driven team overrides, in priority order (the
 	// first entry whose label an issue carries wins). Optional.
 	SpecialTeams []SpecialTeamEntry
+	// PriorityAliases normalize variant "Priority/<tier>" labels onto a
+	// budgeted tier. Optional.
+	PriorityAliases []PriorityAliasEntry
 	// Holidays is a list of ISO 8601 dates ("2026-01-26") excluded from the
 	// 12x5_ist coverage window (24x7 budgets are unaffected — a holiday
 	// only removes hours from a window that already excludes weekends).

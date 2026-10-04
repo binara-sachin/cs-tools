@@ -151,6 +151,23 @@ func Validate(cfg *AppConfig) error {
 		seenPriority[b.Priority] = true
 	}
 
+	seenPriorityAlias := make(map[string]bool, len(cfg.PriorityAliases))
+	for i, a := range cfg.PriorityAliases {
+		if strings.TrimSpace(a.Alias) == "" {
+			add("priorityAliases.%d.alias: must not be empty", i)
+		}
+		if a.Canonical == "" {
+			add("priorityAliases.%d.canonical: must not be empty", i)
+		}
+		if seenPriorityAlias[a.Alias] {
+			add("duplicate priorityAliases alias: %q", a.Alias)
+		}
+		seenPriorityAlias[a.Alias] = true
+		if a.Canonical != "" && !seenPriority[a.Canonical] {
+			add("priorityAliases: %q maps to %q, which is not a budgets priority", a.Alias, a.Canonical)
+		}
+	}
+
 	if cfg.Settings.AtRiskThreshold <= 0 || cfg.Settings.AtRiskThreshold >= 1 {
 		add("settings.atRiskThreshold: must be strictly between 0 and 1")
 	}

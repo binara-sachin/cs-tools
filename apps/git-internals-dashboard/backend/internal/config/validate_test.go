@@ -214,6 +214,37 @@ func TestValidateRejectsBadUnknownStatusPolicy(t *testing.T) {
 	}
 }
 
+func TestValidatePriorityAliases(t *testing.T) {
+	cases := []struct {
+		name    string
+		aliases []PriorityAliasEntry
+		want    string
+	}{
+		{"valid", []PriorityAliasEntry{{Alias: "High", Canonical: "Critical(P1)"}}, ""},
+		{"absent is fine", nil, ""},
+		{"empty alias", []PriorityAliasEntry{{Alias: "", Canonical: "Critical(P1)"}}, "priorityAliases.0.alias"},
+		{"empty canonical", []PriorityAliasEntry{{Alias: "High"}}, "priorityAliases.0.canonical"},
+		{"duplicate alias", []PriorityAliasEntry{{Alias: "High", Canonical: "Critical(P1)"}, {Alias: "High", Canonical: "Critical(P1)"}}, "duplicate priorityAliases alias"},
+		{"canonical not budgeted", []PriorityAliasEntry{{Alias: "High", Canonical: "Nope"}}, "not a budgets priority"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg := validFixture()
+			cfg.PriorityAliases = tc.aliases
+			err := Validate(cfg)
+			if tc.want == "" {
+				if err != nil {
+					t.Fatalf("unexpected error: %v", err)
+				}
+				return
+			}
+			if !hasIssueContaining(err, tc.want) {
+				t.Fatalf("want issue containing %q, got %v", tc.want, err)
+			}
+		})
+	}
+}
+
 func TestValidateSpecialTeams(t *testing.T) {
 	cases := []struct {
 		name  string
