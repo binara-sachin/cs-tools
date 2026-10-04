@@ -32,6 +32,19 @@ taxonomy:
     - { alias: "Re-Opened",          canonical: "Reopened" }
     - { alias: "Waiting on CS Team", canonical: "WOC" }
 
+# Static teams that take over an issue from the ABT team named in its
+# description. An issue carrying `label` is attributed to `name` instead
+# (e.g. accounts mid-migration or mid-onboarding stay assigned to an ABT like
+# Atlas, but the dedicated team handles the case). Label match is
+# case-insensitive; if an issue carries several, the first entry listed here
+# wins. Optional — omit to disable. Changing this takes effect on the next
+# sync of an issue; run `cmd/backfill-meta` to re-derive existing rows.
+specialTeams:
+  - name: Migrations
+    label: "Migration/Affected"
+  - name: Onboarding
+    label: "Onboarding/Affected"
+
 # Budgets in coverage-clock hours (time accrues only inside the coverage window).
 # A 12x5 "business day" is the 12-hour 09:00–21:00 IST window, so
 # P2 "2 days" = 24h and P3 "4 days" = 48h. P4 omitted -> NO_SLA.
@@ -47,19 +60,6 @@ settings:
   atRiskThreshold: 0.75
   # How often the background scheduler re-runs a recompute tick, advancing
   # issue_sla/sla_snapshots from already-synced state. Does not call GitHub.
-# Static teams that take over an issue from the ABT team named in its
-# description. An issue carrying `label` is attributed to `name` instead
-# (e.g. accounts mid-migration or mid-onboarding stay assigned to an ABT like
-# Atlas, but the dedicated team handles the case). Label match is
-# case-insensitive; if an issue carries several, the first entry listed here
-# wins. Optional — omit to disable. Changing this takes effect on the next
-# sync of an issue; run `cmd/backfill-meta` to re-derive existing rows.
-specialTeams:
-  - name: Migrations
-    label: "Migration/Affected"
-  - name: Onboarding
-    label: "Onboarding/Affected"
-
   recomputeIntervalMinutes: 10
   # Minutes subtracted from a repo's last_synced_at watermark before each
   # incremental sync, so anything updated mid-previous-run is re-covered by
