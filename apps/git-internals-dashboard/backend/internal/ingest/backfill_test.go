@@ -85,7 +85,7 @@ func TestBackfillIssueMetaUpdatesExistingRow(t *testing.T) {
 		},
 	}
 
-	results, err := BackfillIssueMeta(ctx, pool, stub, 90)
+	results, err := BackfillIssueMeta(ctx, pool, stub, 90, nil)
 	if err != nil {
 		t.Fatalf("BackfillIssueMeta: %v", err)
 	}
@@ -135,7 +135,7 @@ func TestBackfillIssueMetaSkipsUnknownIssueNumberWithoutInserting(t *testing.T) 
 		},
 	}
 
-	results, err := BackfillIssueMeta(ctx, pool, stub, 90)
+	results, err := BackfillIssueMeta(ctx, pool, stub, 90, nil)
 	if err != nil {
 		t.Fatalf("BackfillIssueMeta: %v", err)
 	}
@@ -182,7 +182,7 @@ func TestBackfillIssueMetaIsolatesPerRepoFailures(t *testing.T) {
 		},
 	}
 
-	results, err := BackfillIssueMeta(ctx, pool, stub, 90)
+	results, err := BackfillIssueMeta(ctx, pool, stub, 90, nil)
 	if err != nil {
 		t.Fatalf("BackfillIssueMeta: %v", err)
 	}

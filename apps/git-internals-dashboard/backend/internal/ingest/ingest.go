@@ -131,6 +131,7 @@ func IngestIssue(ctx context.Context, pool *pgxpool.Pool, pair Pair, ictx Contex
 	priority := extractPriority(node.Labels)
 	title := normalizeTitle(node.Title)
 	meta := ExtractIssueMeta(node.Body) // node.Body is discarded after this line — never logged, persisted elsewhere, or returned
+	meta = ApplySpecialTeam(meta, node.Labels, ictx.Runtime.SpecialTeams)
 
 	// Current status scoped to THIS repo's configured project.
 	var scoped *github.ProjectStatus

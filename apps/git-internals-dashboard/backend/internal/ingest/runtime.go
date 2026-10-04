@@ -30,6 +30,8 @@ type RuntimeConfig struct {
 	Cfg        sla.Config
 	Normalize  StatusNormalizer
 	KnownNames map[string]bool
+	// SpecialTeams are label-driven team overrides (see ApplySpecialTeam).
+	SpecialTeams []config.SpecialTeamEntry
 }
 
 // BuildRuntimeConfig derives a RuntimeConfig from app.
@@ -93,5 +95,7 @@ func BuildRuntimeConfig(app *config.AppConfig) *RuntimeConfig {
 		Cfg:        cfg,
 		Normalize:  BuildStatusNormalizer(app.Taxonomy.Aliases),
 		KnownNames: knownNames,
+
+		SpecialTeams: app.SpecialTeams,
 	}
 }

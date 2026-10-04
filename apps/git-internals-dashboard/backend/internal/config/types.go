@@ -68,6 +68,15 @@ type RepoEntry struct {
 	IssueQuery      string `yaml:"issueQuery"`
 }
 
+// SpecialTeamEntry maps a GitHub issue label to a static team. An issue
+// carrying Label is attributed to Name instead of the ABT team parsed from
+// its description (e.g. migration/onboarding cases handled by a dedicated
+// team regardless of the account's ABT).
+type SpecialTeamEntry struct {
+	Name  string `yaml:"name"`
+	Label string `yaml:"label"`
+}
+
 // StatusEntry is one row of the board-status taxonomy. Name may be "" — the
 // transient empty status a board item briefly holds when removed from the
 // board.
@@ -163,6 +172,9 @@ type AppConfig struct {
 	Taxonomy Taxonomy
 	Budgets  []BudgetEntry
 	Settings Settings
+	// SpecialTeams are label-driven team overrides, in priority order (the
+	// first entry whose label an issue carries wins). Optional.
+	SpecialTeams []SpecialTeamEntry
 	// Holidays is a list of ISO 8601 dates ("2026-01-26") excluded from the
 	// 12x5_ist coverage window (24x7 budgets are unaffected — a holiday
 	// only removes hours from a window that already excludes weekends).

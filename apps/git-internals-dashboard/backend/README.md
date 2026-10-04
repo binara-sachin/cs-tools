@@ -248,7 +248,9 @@ See `openapi.yaml` for the full request/response contract.
 
 Persisted: issue title, ABT team, and opened-by (only a `@wso2.com` address), as approved by
 Security. The issue body is read transiently during ingest solely to derive ABT team and
-opened-by, then discarded. Labels are read transiently to derive priority, then discarded.
+opened-by, then discarded. Labels are read transiently to derive priority and to apply the `specialTeams` override in
+`config/sla-config.yaml` (an issue with e.g. `Migration/Affected` is stored under the Migrations
+team instead of its description's ABT team), then discarded.
 Assignees and status-event actors are never fetched or stored.
 
 ## Deploying
