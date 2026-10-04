@@ -21,7 +21,6 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"sync"
 	"testing"
 	"time"
@@ -31,6 +30,7 @@ import (
 	"github.com/binara-sachin/git-internals-dashboard/backend/internal/config"
 	"github.com/binara-sachin/git-internals-dashboard/backend/internal/ingest"
 	"github.com/binara-sachin/git-internals-dashboard/backend/internal/jobs"
+	"github.com/binara-sachin/git-internals-dashboard/backend/internal/testdb"
 )
 
 // testDatabaseURL returns the DSN testPool(t) already validated as
@@ -38,10 +38,7 @@ import (
 // unreachable DB skips cleanly instead of failing here.
 func testDatabaseURL(t *testing.T) string {
 	t.Helper()
-	if url := os.Getenv("DATABASE_URL"); url != "" {
-		return url
-	}
-	return "postgres://gid:gid@localhost:5433/gid?sslmode=disable"
+	return testdb.URL(t)
 }
 
 // TestPostSyncRunsReturns400WhenTokenMissing verifies POST /sync/runs

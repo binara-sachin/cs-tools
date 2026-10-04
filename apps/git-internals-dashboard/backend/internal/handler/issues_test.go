@@ -22,7 +22,6 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"strconv"
 	"strings"
 	"testing"
@@ -32,6 +31,7 @@ import (
 	"github.com/binara-sachin/git-internals-dashboard/backend/internal/appconfig"
 	"github.com/binara-sachin/git-internals-dashboard/backend/internal/config"
 	"github.com/binara-sachin/git-internals-dashboard/backend/internal/db"
+	"github.com/binara-sachin/git-internals-dashboard/backend/internal/testdb"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -39,10 +39,7 @@ import (
 // (rather than failing) when it's unreachable.
 func testPool(t *testing.T) *pgxpool.Pool {
 	t.Helper()
-	url := os.Getenv("DATABASE_URL")
-	if url == "" {
-		url = "postgres://gid:gid@localhost:5433/gid?sslmode=disable"
-	}
+	url := testdb.URL(t)
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
 	pool, err := db.NewPool(ctx, url)
