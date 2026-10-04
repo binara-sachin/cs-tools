@@ -28,7 +28,6 @@ import { ProjectCard } from "@components/ProjectCard";
 import { PriorityTierCard } from "@components/PriorityTierCard";
 import { PriorityStateMatrix } from "@components/PriorityStateMatrix";
 import { TimeseriesChart } from "@components/TimeseriesChart";
-import { ClosestToBreach } from "@components/ClosestToBreach";
 import { VolumePanel } from "@components/VolumePanel";
 import { AttentionSet } from "@components/AttentionSet";
 import { acrylicSurfaceSx } from "@lib/surfaces";
@@ -180,9 +179,6 @@ export default function DashboardPage() {
           <Skeleton variant="rounded" sx={{ height: 300, borderRadius: "16px" }} />
         </Box>
 
-        {/* Closest to breach */}
-        <Skeleton variant="rounded" sx={{ height: 260, borderRadius: "16px" }} />
-
         {/* New-issue volume */}
         <Skeleton variant="rounded" sx={{ height: 340, borderRadius: "16px" }} />
 
@@ -297,11 +293,6 @@ export default function DashboardPage() {
       <Box component="section" sx={{ mb: "22px", display: "grid", gap: "18px", gridTemplateColumns: { lg: ".92fr 1.08fr" } }}>
         <PriorityStateMatrix matrix={overview.matrix} onDrill={(bucket, pKey) => drill(bucket, { priority: pKey ?? null })} />
         <TimeseriesChart repo={repo} abtTeam={abtTeam} activePriority={priority} onPriorityFilter={(pKey) => setFilter("priority", pKey)} />
-      </Box>
-
-      {/* Closest to breach */}
-      <Box sx={{ mb: "22px" }}>
-        <ClosestToBreach repo={repo} priority={priority} abtTeam={abtTeam} projects={overview.projects} />
       </Box>
 
       {/* New-issue volume */}

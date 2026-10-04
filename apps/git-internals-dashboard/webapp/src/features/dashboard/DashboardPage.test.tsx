@@ -166,6 +166,21 @@ describe("DashboardPage", () => {
     await waitFor(() => expect(screen.queryByRole("progressbar")).not.toBeInTheDocument());
   });
 
+  it("does not render the removed Closest to breach widget", async () => {
+    const fetchMock = vi.fn((input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes("/metrics/overview")) return Promise.resolve(jsonResponse(OVERVIEW));
+      if (url.includes("/metrics/timeseries"))
+        return Promise.resolve(jsonResponse({ window: 12, metric: "violated", groupBy: "priority", dates: [], series: [] }));
+      if (url.includes("/taxonomy")) return Promise.resolve(jsonResponse({ statuses: [], csStatuses: [] }));
+      if (url.includes("/issues")) return Promise.resolve(jsonResponse([]));
+      return Promise.reject(new Error(`unexpected fetch: ${url}`));
+    });
+    renderDashboardPage(fetchMock);
+    await screen.findByRole("button", { name: "Focus project Alpha" });
+    expect(screen.queryByText("Closest to breach")).not.toBeInTheDocument();
+  });
+
   it("carries the abtTeam filter through a drill link", async () => {
     const fetchMock = vi.fn((input: RequestInfo | URL) => {
       const url = String(input);

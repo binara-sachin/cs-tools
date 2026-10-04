@@ -43,12 +43,16 @@ interface AttentionSetProps {
   statusLabel?: (status: string) => string;
 }
 
-/** Filterable list of violated/at-risk/CS-side issues, with toggleable category chips. */
+/** Max rows shown, applied after the chip filter so every chip combination still fills up to this many. */
+const MAX_ROWS = 10;
+
+/** Top-10 filterable list of violated/at-risk/CS-side issues, with toggleable category chips. */
 export function AttentionSet({ hero, projects, repo, priority, abtTeam, isCsStatus, statusLabel }: AttentionSetProps) {
   const [active, setActive] = useState<Set<Category>>(new Set(["violated", "at_risk", "cs"]));
 
   // Capped summary, not a browse view: no pagination/sort controls of its
-  // own, just a bounded top-N by SLA consumption. The full, paginated list
+  // own, just a bounded top-N by SLA consumption. Fetches more than MAX_ROWS
+  // because the chip filter below runs client-side and can drop rows. The full, paginated list
   // lives on the Issues page (bucket=attention).
   const { data } = useIssues({
     bucket: "attention",
@@ -78,12 +82,14 @@ export function AttentionSet({ hero, projects, repo, priority, abtTeam, isCsStat
     cs: hero.cs.n,
   };
 
-  const rows = (issues ?? []).filter((i) => {
-    if (active.has("violated") && i.sla?.slaState === "VIOLATED") return true;
-    if (active.has("at_risk") && i.sla?.slaState === "AT_RISK") return true;
-    if (active.has("cs") && isCsStatus(i.currentStatus)) return true;
-    return false;
-  });
+  const rows = (issues ?? [])
+    .filter((i) => {
+      if (active.has("violated") && i.sla?.slaState === "VIOLATED") return true;
+      if (active.has("at_risk") && i.sla?.slaState === "AT_RISK") return true;
+      if (active.has("cs") && isCsStatus(i.currentStatus)) return true;
+      return false;
+    })
+    .slice(0, MAX_ROWS);
 
   const cols = gridTemplate("compact");
 
