@@ -65,6 +65,14 @@ func (s *SyncScheduler) Start(ctx context.Context) {
 // stop the loop.
 func (s *SyncScheduler) tick(ctx context.Context) {
 	start := time.Now()
+	// This runs in a bare goroutine, outside middleware.Recovery: an
+	// unrecovered panic in the sync would take down the whole server. TryRun
+	// releases the job lock on the way out of the unwinding stack.
+	defer func() {
+		if r := recover(); r != nil {
+			slog.ErrorContext(ctx, "scheduled github sync panicked", "panic", r)
+		}
+	}()
 	_, ran, err := TryRun(ctx, s.lock, func(ctx context.Context) (struct{}, error) {
 		return struct{}{}, s.run(ctx)
 	})

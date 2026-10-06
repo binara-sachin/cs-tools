@@ -19,6 +19,12 @@ TEST_DATABASE_URL ?= postgres://gid:gid@localhost:5433/$(TEST_DB_NAME)?sslmode=d
 
 # Creates the test database if missing and applies migrations to it.
 test-db:
+	@# Refuse before migrating: a TEST_DATABASE_URL naming a non-_test database
+	@# (the dev DB) would otherwise be migrated before testdb could reject it.
+	@# dbname is read from the query string first (pgx honours it over the path).
+	@name=$$(printf '%s' "$(TEST_DATABASE_URL)" | sed -n 's/.*[?&]dbname=\([^&]*\).*/\1/p'); \
+	[ -n "$$name" ] || name=$$(printf '%s' "$(TEST_DATABASE_URL)" | sed -e 's/[?].*//' -e 's#.*/##'); \
+	case "$$name" in *_test) ;; *) echo "TEST_DATABASE_URL must name a database ending in _test (got '$$name')" >&2; exit 1;; esac
 	@psql "$(TEST_DB_ADMIN_URL)" -tAc "SELECT 1 FROM pg_database WHERE datname = '$(TEST_DB_NAME)'" | grep -q 1 \
 		|| psql "$(TEST_DB_ADMIN_URL)" -c 'CREATE DATABASE $(TEST_DB_NAME)'
 	@migrate -path migrations -database "$(TEST_DATABASE_URL)" up

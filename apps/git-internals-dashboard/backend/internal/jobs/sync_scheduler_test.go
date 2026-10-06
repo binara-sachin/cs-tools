@@ -135,3 +135,24 @@ func TestSyncSchedulerStopsOnContextCancel(t *testing.T) {
 		t.Errorf("expected no ticks after cancel, went from %d to %d", after, got)
 	}
 }
+
+func TestSyncSchedulerTickRecoversFromPanic(t *testing.T) {
+	lock := NewLock(testDatabaseURL(t))
+	var calls atomic.Int32
+	s := NewSyncScheduler(lock, time.Hour, func(ctx context.Context) error {
+		if calls.Add(1) == 1 {
+			panic("boom")
+		}
+		return nil
+	})
+
+	s.tick(context.Background()) // must not panic out of tick
+
+	if lock.Running() {
+		t.Error("expected the job lock to be released after a panicking run")
+	}
+	s.tick(context.Background())
+	if got := calls.Load(); got != 2 {
+		t.Errorf("expected the next tick to run normally after a panic, got %d calls", got)
+	}
+}

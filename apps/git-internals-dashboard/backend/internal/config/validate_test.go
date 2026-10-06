@@ -225,6 +225,7 @@ func TestValidatePriorityAliases(t *testing.T) {
 		{"empty alias", []PriorityAliasEntry{{Alias: "", Canonical: "Critical(P1)"}}, "priorityAliases.0.alias"},
 		{"empty canonical", []PriorityAliasEntry{{Alias: "High"}}, "priorityAliases.0.canonical"},
 		{"duplicate alias", []PriorityAliasEntry{{Alias: "High", Canonical: "Critical(P1)"}, {Alias: "High", Canonical: "Critical(P1)"}}, "duplicate priorityAliases alias"},
+		{"duplicate alias differing only by whitespace", []PriorityAliasEntry{{Alias: "High", Canonical: "Critical(P1)"}, {Alias: "High ", Canonical: "Critical(P1)"}}, "duplicate priorityAliases alias"},
 		{"canonical not budgeted", []PriorityAliasEntry{{Alias: "High", Canonical: "Nope"}}, "not a budgets priority"},
 	}
 	for _, tc := range cases {

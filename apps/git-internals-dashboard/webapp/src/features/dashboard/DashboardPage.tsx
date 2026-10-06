@@ -243,7 +243,11 @@ export default function DashboardPage() {
         </>
         <CsHeroCard
           n={overview.hero.cs.n}
-          label={statusLabel(taxonomy?.csStatuses[0] ?? "WOC")}
+          // hero.cs.n counts every CS status, so name one only when it is the
+          // only one; several get a generic label rather than understating.
+          label={
+            (taxonomy?.csStatuses.length ?? 0) > 1 ? "CS team side" : statusLabel(taxonomy?.csStatuses[0] ?? "WOC")
+          }
           onDrill={() => drill("cs")}
         />
       </Box>

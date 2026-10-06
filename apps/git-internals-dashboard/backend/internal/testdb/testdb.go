@@ -24,10 +24,11 @@
 package testdb
 
 import (
-	"net/url"
 	"os"
 	"strings"
 	"testing"
+
+	"github.com/jackc/pgx/v5/pgconn"
 )
 
 const defaultURL = "postgres://gid:gid@localhost:5433/gid_test?sslmode=disable"
@@ -46,11 +47,15 @@ func URL(t testing.TB) string {
 	return dsn
 }
 
-// isTestDatabase reports whether dsn's database name ends in "_test".
+// isTestDatabase reports whether the database pgx will actually connect to
+// for dsn ends in "_test". The DSN is parsed with pgx rather than read as a
+// URL path because pgx honours a ?dbname= parameter (or a keyword/value
+// dbname=) over the path, so the path alone can name a different database
+// than the one that gets truncated.
 func isTestDatabase(dsn string) bool {
-	u, err := url.Parse(dsn)
+	cfg, err := pgconn.ParseConfig(dsn)
 	if err != nil {
 		return false
 	}
-	return strings.HasSuffix(strings.TrimPrefix(u.Path, "/"), "_test")
+	return strings.HasSuffix(cfg.Database, "_test")
 }

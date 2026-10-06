@@ -25,6 +25,12 @@ func TestIsTestDatabase(t *testing.T) {
 		"postgres://gid:gid@localhost:5433/gid_testing":              false,
 		"postgres://gid:gid@localhost:5433/":                         false,
 		"://bad":                                                     false,
+		// pgx honours ?dbname= over the URL path, so the effective database
+		// is what must be checked, not the path.
+		"postgres://gid:gid@localhost:5433/gid_test?dbname=gid": false,
+		"postgres://gid:gid@localhost:5433/gid?dbname=gid_test": true,
+		"host=localhost port=5433 user=gid dbname=gid_test":     true,
+		"host=localhost port=5433 user=gid dbname=gid":          false,
 	}
 	for dsn, want := range cases {
 		if got := isTestDatabase(dsn); got != want {

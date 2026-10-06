@@ -276,6 +276,10 @@ GITHUB_TOKEN=... DATABASE_URL=... make backfill-meta
 It only updates existing rows (never inserts, never touches SLA history) and is safe to
 re-run.
 
+It updates only `title`, `abt_team` (including the special-team label override) and
+`opened_by`. It does not re-apply `priorityAliases`, so an existing row keeps its stored
+priority until the issue is next ingested by a sync.
+
 The backfill only reaches issues within the search lookback window
 (`settings.seedClosedLookbackDays`); issues closed longer ago than that keep `NULL`
 title/abt_team/opened_by permanently unless the lookback setting is widened, but since

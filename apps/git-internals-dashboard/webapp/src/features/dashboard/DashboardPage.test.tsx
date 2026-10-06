@@ -260,4 +260,24 @@ describe("DashboardPage", () => {
     await waitFor(() => expect(router.state.location.pathname).toBe("/issues"));
     expect(new URLSearchParams(router.state.location.search).getAll("status")).toEqual(["WOC"]);
   });
+
+  it("uses a generic CS label and drills into every CS status when several are configured", async () => {
+    const taxonomy = {
+      statuses: [
+        ...DRILL_TAXONOMY.statuses,
+        { name: "WOV", displayName: "Waiting on Vendor", category: "CS_SIDE", accruesSla: false, isTerminal: false, sortOrder: 40 },
+      ],
+      csStatuses: ["WOC", "WOV"],
+    };
+    const base = drillFetch();
+    const fetchMock = vi.fn((input: RequestInfo | URL) =>
+      String(input).includes("/taxonomy") ? Promise.resolve(jsonResponse(taxonomy)) : base(input),
+    );
+    const router = renderDashboardPage(fetchMock);
+
+    fireEvent.click(await screen.findByTitle("View CS team side issues"));
+
+    await waitFor(() => expect(router.state.location.pathname).toBe("/issues"));
+    expect(new URLSearchParams(router.state.location.search).getAll("status")).toEqual(["WOC", "WOV"]);
+  });
 });

@@ -159,10 +159,13 @@ func Validate(cfg *AppConfig) error {
 		if a.Canonical == "" {
 			add("priorityAliases.%d.canonical: must not be empty", i)
 		}
-		if seenPriorityAlias[a.Alias] {
+		// Keyed on the trimmed alias, matching ingest.BuildRuntimeConfig:
+		// "High" and "High " collide at runtime, so they must collide here.
+		aliasKey := strings.TrimSpace(a.Alias)
+		if seenPriorityAlias[aliasKey] {
 			add("duplicate priorityAliases alias: %q", a.Alias)
 		}
-		seenPriorityAlias[a.Alias] = true
+		seenPriorityAlias[aliasKey] = true
 		if a.Canonical != "" && !seenPriority[a.Canonical] {
 			add("priorityAliases: %q maps to %q, which is not a budgets priority", a.Alias, a.Canonical)
 		}
