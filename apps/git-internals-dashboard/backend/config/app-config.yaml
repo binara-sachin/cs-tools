@@ -81,6 +81,12 @@ jobs:
   # Deadline for one POST /sync/runs pass. Deliberately far above the server
   # write timeout: the route runs on a detached context.
   syncRunDeadlineMinutes: 15
+  # How often the in-process scheduler syncs from GitHub (same work as
+  # POST /sync/runs, under the same job lock, so a scheduled and a manual
+  # sync never overlap). The first run happens one full interval after boot,
+  # not at startup. Disabled when GITHUB_TOKEN is unset or
+  # SYNC_SCHEDULER_ENABLED=0. Must be at least 1.
+  githubSyncIntervalMinutes: 15
   # Timeout for releasing the Postgres advisory lock on the way out.
   lockReleaseTimeoutSeconds: 5
   # Keyset page size for one recompute pass.

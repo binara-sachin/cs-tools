@@ -343,3 +343,40 @@ func TestLoadReadinessDrainGracePeriodOverrideLeavesRestAtDefault(t *testing.T) 
 		t.Errorf("expected only drainGracePeriodSeconds to differ from Default(), got: %+v", cfg.Readiness)
 	}
 }
+
+// TestDefaultGithubSyncIntervalIs15Minutes pins the shipped default for the
+// scheduled GitHub sync.
+func TestDefaultGithubSyncIntervalIs15Minutes(t *testing.T) {
+	if got := Default().Jobs.GithubSyncIntervalMinutes; got != 15 {
+		t.Errorf("expected default jobs.githubSyncIntervalMinutes=15, got %d", got)
+	}
+}
+
+func TestLoadGithubSyncIntervalOverride(t *testing.T) {
+	path := writeConfig(t, "jobs:\n  githubSyncIntervalMinutes: 5\n")
+	t.Setenv("APP_CONFIG_PATH", path)
+
+	cfg, err := Load()
+	if err != nil {
+		t.Fatalf("expected valid config, got: %v", err)
+	}
+	if cfg.Jobs.GithubSyncIntervalMinutes != 5 {
+		t.Errorf("expected jobs.githubSyncIntervalMinutes=5, got %d", cfg.Jobs.GithubSyncIntervalMinutes)
+	}
+	if cfg.Jobs.SyncRunDeadlineMinutes != Default().Jobs.SyncRunDeadlineMinutes {
+		t.Errorf("expected sibling jobs keys to stay at default, got %+v", cfg.Jobs)
+	}
+}
+
+func TestLoadGithubSyncIntervalExplicitZeroRejected(t *testing.T) {
+	path := writeConfig(t, "jobs:\n  githubSyncIntervalMinutes: 0\n")
+	t.Setenv("APP_CONFIG_PATH", path)
+
+	_, err := Load()
+	if err == nil {
+		t.Fatal("expected an error for an explicit 0 githubSyncIntervalMinutes")
+	}
+	if !strings.Contains(err.Error(), "jobs.githubSyncIntervalMinutes") {
+		t.Errorf("expected error naming jobs.githubSyncIntervalMinutes, got: %v", err)
+	}
+}

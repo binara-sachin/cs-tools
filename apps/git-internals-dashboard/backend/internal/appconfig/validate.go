@@ -125,6 +125,7 @@ func Validate(cfg *Config) error {
 		add("jobs.recomputePageSize: must be at least 1")
 	}
 	positive("jobs.syncRunDeadlineMinutes", cfg.Jobs.SyncRunDeadlineMinutes)
+	positive("jobs.githubSyncIntervalMinutes", cfg.Jobs.GithubSyncIntervalMinutes)
 	positive("jobs.lockReleaseTimeoutSeconds", cfg.Jobs.LockReleaseTimeoutSeconds)
 
 	if cfg.Seed.InterIssueDelayMs < 0 {

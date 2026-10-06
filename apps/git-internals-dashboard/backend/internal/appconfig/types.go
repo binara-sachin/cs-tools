@@ -94,6 +94,7 @@ type GitHub struct {
 // Jobs holds the background recompute/sync job knobs.
 type Jobs struct {
 	SyncRunDeadlineMinutes    int
+	GithubSyncIntervalMinutes int
 	LockReleaseTimeoutSeconds int
 	RecomputePageSize         int
 }
@@ -163,6 +164,7 @@ func Default() Config {
 		},
 		Jobs: Jobs{
 			SyncRunDeadlineMinutes:    15,
+			GithubSyncIntervalMinutes: 15,
 			LockReleaseTimeoutSeconds: 5,
 			RecomputePageSize:         200,
 		},

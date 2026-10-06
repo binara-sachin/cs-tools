@@ -135,6 +135,7 @@ func (r rawGitHub) resolve(d GitHub) GitHub {
 // rawJobs mirrors Jobs with optional fields.
 type rawJobs struct {
 	SyncRunDeadlineMinutes    *int `yaml:"syncRunDeadlineMinutes"`
+	GithubSyncIntervalMinutes *int `yaml:"githubSyncIntervalMinutes"`
 	LockReleaseTimeoutSeconds *int `yaml:"lockReleaseTimeoutSeconds"`
 	RecomputePageSize         *int `yaml:"recomputePageSize"`
 }
@@ -143,6 +144,9 @@ func (r rawJobs) resolve(d Jobs) Jobs {
 	j := d
 	if r.SyncRunDeadlineMinutes != nil {
 		j.SyncRunDeadlineMinutes = *r.SyncRunDeadlineMinutes
+	}
+	if r.GithubSyncIntervalMinutes != nil {
+		j.GithubSyncIntervalMinutes = *r.GithubSyncIntervalMinutes
 	}
 	if r.LockReleaseTimeoutSeconds != nil {
 		j.LockReleaseTimeoutSeconds = *r.LockReleaseTimeoutSeconds
