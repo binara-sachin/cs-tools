@@ -18,16 +18,25 @@ TEST_DB_ADMIN_URL ?= postgres://gid:gid@localhost:5433/postgres?sslmode=disable
 TEST_DATABASE_URL ?= postgres://gid:gid@localhost:5433/$(TEST_DB_NAME)?sslmode=disable
 
 # Creates the test database if missing and applies migrations to it.
+#
+# The database name is read once from TEST_DATABASE_URL and reused for the
+# existence check, CREATE DATABASE and migrate, so they always target the same
+# database (TEST_DB_NAME only feeds the default URL above). It is refused
+# before anything runs unless it is a plain identifier ending in _test: a
+# TEST_DATABASE_URL naming the dev database would otherwise be migrated before
+# testdb could reject it. dbname is read from the query string first (pgx
+# honours it over the URL path).
 test-db:
-	@# Refuse before migrating: a TEST_DATABASE_URL naming a non-_test database
-	@# (the dev DB) would otherwise be migrated before testdb could reject it.
-	@# dbname is read from the query string first (pgx honours it over the path).
 	@name=$$(printf '%s' "$(TEST_DATABASE_URL)" | sed -n 's/.*[?&]dbname=\([^&]*\).*/\1/p'); \
 	[ -n "$$name" ] || name=$$(printf '%s' "$(TEST_DATABASE_URL)" | sed -e 's/[?].*//' -e 's#.*/##'); \
-	case "$$name" in *_test) ;; *) echo "TEST_DATABASE_URL must name a database ending in _test (got '$$name')" >&2; exit 1;; esac
-	@psql "$(TEST_DB_ADMIN_URL)" -tAc "SELECT 1 FROM pg_database WHERE datname = '$(TEST_DB_NAME)'" | grep -q 1 \
-		|| psql "$(TEST_DB_ADMIN_URL)" -c 'CREATE DATABASE $(TEST_DB_NAME)'
-	@migrate -path migrations -database "$(TEST_DATABASE_URL)" up
+	case "$$name" in \
+		*[!A-Za-z0-9_]*|"") echo "TEST_DATABASE_URL database name must be letters, digits and underscores (got '$$name')" >&2; exit 1;; \
+		*_test) ;; \
+		*) echo "TEST_DATABASE_URL must name a database ending in _test (got '$$name')" >&2; exit 1;; \
+	esac; \
+	psql "$(TEST_DB_ADMIN_URL)" -tAc "SELECT 1 FROM pg_database WHERE datname = '$$name'" | grep -q 1 \
+		|| psql "$(TEST_DB_ADMIN_URL)" -c "CREATE DATABASE $$name"; \
+	migrate -path migrations -database "$(TEST_DATABASE_URL)" up
 
 # -p 1 serializes package test execution: DB-backed tests across packages
 # insert raw-SQL fixtures directly into the shared test Postgres (no
