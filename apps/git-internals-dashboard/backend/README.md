@@ -229,7 +229,7 @@ backend/
 - `GET /issues/{id}` — Get issue by ID
 - `GET /metrics/overview` — Aggregate SLA/volume overview
 - `GET /metrics/timeseries` — SLA/volume trend over time
-- `POST /sync/runs` — Trigger an incremental GitHub sync
+- `POST /sync/runs` — Trigger an incremental GitHub sync (429 `sync_cooldown` with `Retry-After` if a sync finished within `jobs.manualSyncCooldownSeconds`, default 30)
 - `GET /sync/status` — Get the status of the most recent sync
 
 See `openapi.yaml` for the full request/response contract.

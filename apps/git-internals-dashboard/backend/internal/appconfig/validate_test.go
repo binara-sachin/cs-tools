@@ -198,3 +198,12 @@ func TestValidateRejectsNonPositiveGithubSyncInterval(t *testing.T) {
 		}
 	}
 }
+
+func TestValidateRejectsNegativeManualSyncCooldown(t *testing.T) {
+	cfg := Default()
+	cfg.Jobs.ManualSyncCooldownSeconds = -1
+	err := Validate(&cfg)
+	if err == nil || !strings.Contains(err.Error(), "jobs.manualSyncCooldownSeconds") {
+		t.Errorf("expected error naming jobs.manualSyncCooldownSeconds, got: %v", err)
+	}
+}

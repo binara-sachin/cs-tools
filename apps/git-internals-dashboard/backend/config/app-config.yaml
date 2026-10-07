@@ -87,6 +87,11 @@ jobs:
   # not at startup. Disabled when GITHUB_TOKEN is unset or
   # SYNC_SCHEDULER_ENABLED=0. Must be at least 1.
   githubSyncIntervalMinutes: 15
+  # Minimum gap between the last finished sync (manual or scheduled) and the
+  # next POST /sync/runs; a request inside the window gets 429 sync_cooldown
+  # with a Retry-After header. The webapp disables its Sync button for the same
+  # window. 0 disables the cooldown.
+  manualSyncCooldownSeconds: 30
   # Timeout for releasing the Postgres advisory lock on the way out.
   lockReleaseTimeoutSeconds: 5
   # Keyset page size for one recompute pass.

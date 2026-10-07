@@ -139,7 +139,8 @@ func main() {
 	issuesHandler := handler.NewIssuesHandler(pool, slaCfg, appCfg.API)
 	metricsHandler := handler.NewMetricsHandler(pool, slaCfg, appCfg.Cache, appCfg.API)
 	syncHandler := handler.NewSyncHandler(pool, slaCfg, lock, runtime, githubToken,
-		time.Duration(appCfg.Jobs.SyncRunDeadlineMinutes)*time.Minute)
+		time.Duration(appCfg.Jobs.SyncRunDeadlineMinutes)*time.Minute,
+		time.Duration(appCfg.Jobs.ManualSyncCooldownSeconds)*time.Second)
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /healthz", healthHandler.GetHealthz)

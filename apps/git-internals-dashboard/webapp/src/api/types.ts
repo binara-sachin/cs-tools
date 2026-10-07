@@ -178,6 +178,8 @@ export interface Taxonomy {
 
 export interface SyncStatus {
   running: boolean;
+  /** Seconds until POST /sync/runs stops answering 429 (0 = allowed now). */
+  manualSyncCooldownRemainingSeconds: number;
   repos: Array<{ repo: string; lastSyncedAt: string | null }>;
   lastRun: {
     kind: string | null;

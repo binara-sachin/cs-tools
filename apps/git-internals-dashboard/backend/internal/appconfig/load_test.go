@@ -17,6 +17,7 @@
 package appconfig
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -378,5 +379,28 @@ func TestLoadGithubSyncIntervalExplicitZeroRejected(t *testing.T) {
 	}
 	if !strings.Contains(err.Error(), "jobs.githubSyncIntervalMinutes") {
 		t.Errorf("expected error naming jobs.githubSyncIntervalMinutes, got: %v", err)
+	}
+}
+
+// TestDefaultManualSyncCooldownIs30Seconds pins the shipped default for the
+// POST /sync/runs cooldown.
+func TestDefaultManualSyncCooldownIs30Seconds(t *testing.T) {
+	if got := Default().Jobs.ManualSyncCooldownSeconds; got != 30 {
+		t.Errorf("expected default jobs.manualSyncCooldownSeconds=30, got %d", got)
+	}
+}
+
+func TestLoadManualSyncCooldownOverrideAndExplicitZero(t *testing.T) {
+	for _, want := range []int{60, 0} { // 0 is legal: it disables the cooldown
+		path := writeConfig(t, fmt.Sprintf("jobs:\n  manualSyncCooldownSeconds: %d\n", want))
+		t.Setenv("APP_CONFIG_PATH", path)
+
+		cfg, err := Load()
+		if err != nil {
+			t.Fatalf("expected valid config for %d, got: %v", want, err)
+		}
+		if cfg.Jobs.ManualSyncCooldownSeconds != want {
+			t.Errorf("expected jobs.manualSyncCooldownSeconds=%d, got %d", want, cfg.Jobs.ManualSyncCooldownSeconds)
+		}
 	}
 }

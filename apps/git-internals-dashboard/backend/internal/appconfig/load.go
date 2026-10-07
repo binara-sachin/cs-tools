@@ -136,6 +136,7 @@ func (r rawGitHub) resolve(d GitHub) GitHub {
 type rawJobs struct {
 	SyncRunDeadlineMinutes    *int `yaml:"syncRunDeadlineMinutes"`
 	GithubSyncIntervalMinutes *int `yaml:"githubSyncIntervalMinutes"`
+	ManualSyncCooldownSeconds *int `yaml:"manualSyncCooldownSeconds"`
 	LockReleaseTimeoutSeconds *int `yaml:"lockReleaseTimeoutSeconds"`
 	RecomputePageSize         *int `yaml:"recomputePageSize"`
 }
@@ -147,6 +148,9 @@ func (r rawJobs) resolve(d Jobs) Jobs {
 	}
 	if r.GithubSyncIntervalMinutes != nil {
 		j.GithubSyncIntervalMinutes = *r.GithubSyncIntervalMinutes
+	}
+	if r.ManualSyncCooldownSeconds != nil {
+		j.ManualSyncCooldownSeconds = *r.ManualSyncCooldownSeconds
 	}
 	if r.LockReleaseTimeoutSeconds != nil {
 		j.LockReleaseTimeoutSeconds = *r.LockReleaseTimeoutSeconds
